@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Panitia — Retreat Jemari 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:    #1A3A5C;
+    --navy2:   #0F2440;
+    --teal:    #2A8B8B;
+    --teal2:   #1F6B6B;
+    --teal3:   #E0F4F4;
+    --gold:    #C8922B;
+    --gold2:   #F0B840;
+    --goldbg:  #FFF8E8;
+    --white:   #FFFFFF;
+    --bg:      #F0F6FA;
+    --card:    #FFFFFF;
+    --text:    #1C2E3E;
+    --muted:   #6B8CA8;
+    --border:  #D4E6F1;
+    --success: #2A9D6F;
+    --warn:    #E07B30;
+    --error:   #D94F3B;
+    --shadow:  0 4px 24px rgba(26,58,92,0.09);
+    --radius:  14px;
+
+    /* Generasi colors */
+    --c-anak:    #4ECDC4;
+    --c-remaja:  #45B7D1;
+    --c-pemuda:  #2A8B8B;
+    --c-dewasa:  #1A3A5C;
+    --c-adi:     #C8922B;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+
+
+  /* ── Dashboard layout ── */
+  .dashboard { display: none; }
+
+  /* Top bar */
+  .topbar {
+    background: var(--navy);
+    padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+    box-shadow: 0 2px 12px rgba(26,58,92,0.20);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .topbar-logo {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .topbar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; color: #fff; font-weight: 700;
+  }
+  .topbar-title span { color: var(--gold2); }
+  .topbar-right {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .last-updated {
+    font-size: 11.5px; color: rgba(255,255,255,0.5);
+  }
+  .btn-refresh {
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.20);
+    border-radius: 8px; padding: 6px 14px;
+    color: rgba(255,255,255,0.85); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-refresh:hover { background: rgba(255,255,255,0.18); }
+  .btn-logout {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.20);
+    border-radius: 8px; padding: 6px 12px;
+    color: rgba(255,255,255,0.6); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-logout:hover { color: #FF8A80; border-color: #FF8A80; }
+
+  /* Main content */
+  .main {
+    padding: 24px 20px 60px;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  /* ── Stat cards ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+  .stat-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+  }
+  .stat-card.primary::before  { background: linear-gradient(90deg, var(--teal), var(--teal2)); }
+  .stat-card.male::before     { background: linear-gradient(90deg, #45B7D1, #2980B9); }
+  .stat-card.female::before   { background: linear-gradient(90deg, #E91E8C, #C2185B); }
+  .stat-card.pending::before  { background: linear-gradient(90deg, var(--warn), #C0642A); }
+
+  .stat-label {
+    font-size: 11.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px; font-weight: 900; line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-card.primary .stat-num  { color: var(--teal); }
+  .stat-card.male .stat-num     { color: #2980B9; }
+  .stat-card.female .stat-num   { color: #C2185B; }
+  .stat-card.pending .stat-num  { color: var(--warn); }
+
+  .stat-sub {
+    font-size: 12px; color: var(--muted); font-weight: 500;
+  }
+  .stat-icon {
+    position: absolute; right: 16px; top: 16px;
+    font-size: 28px; opacity: 0.12;
+  }
+
+  .stat-card.income::before  { background: linear-gradient(90deg, var(--success), #1E7A52); }
+  .stat-card.income .stat-num { color: var(--success); }
+
+  /* ── Chart cards ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .chart-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+  .chart-title {
+    font-size: 13px; font-weight: 700; color: var(--navy);
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chart-title-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  /* ── Income banner ── */
+  .income-banner {
+    background: linear-gradient(135deg, #1A4A2E 0%, #2A7A4E 60%, var(--success) 100%);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    box-shadow: 0 6px 28px rgba(42,157,111,0.20);
+    animation: fadeUp 0.5s 0.05s ease both;
+  }
+  .income-main {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .income-icon {
+    font-size: 36px; line-height: 1;
+  }
+  .income-label {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: rgba(255,255,255,0.70); margin-bottom: 4px;
+  }
+  .income-amount {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; font-weight: 900; color: #fff; line-height: 1;
+  }
+  .income-breakdown {
+    display: flex; flex-wrap: wrap; gap: 10px;
+  }
+  .income-pill {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.20);
+    border-radius: 20px; padding: 6px 14px;
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 90px;
+  }
+  .income-pill-label { font-size: 10px; color: rgba(255,255,255,0.65); font-weight: 600; margin-bottom: 2px; }
+  .income-pill-val   { font-size: 13px; color: #fff; font-weight: 700; }
+  .income-pill-count { font-size: 10px; color: rgba(255,255,255,0.55); }
+
+  /* ── Bar chart ── */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .bar-label {
+    font-size: 12px; font-weight: 600; color: var(--text);
+    min-width: 110px; white-space: nowrap;
+    text-overflow: ellipsis; overflow: hidden;
+  }
+  .bar-track {
+    flex: 1; height: 22px;
+    background: var(--bg); border-radius: 6px; overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 6px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; align-items: center; padding-left: 8px;
+    min-width: 0; width: 0;
+  }
+  .bar-val {
+    font-size: 11px; font-weight: 700; color: white;
+    white-space: nowrap;
+  }
+  .bar-num {
+    font-size: 12px; font-weight: 700; color: var(--navy);
+    min-width: 24px; text-align: right;
+  }
+
+  /* ── Donut chart ── */
+  .donut-wrap {
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .donut-svg-wrap {
+    flex-shrink: 0; position: relative;
+    width: 120px; height: 120px;
+  }
+  .donut-center-text {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .donut-center-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; font-weight: 900; color: var(--navy); line-height: 1;
+  }
+  .donut-center-label {
+    font-size: 10px; color: var(--muted); font-weight: 600; margin-top: 2px;
+  }
+  .donut-legend { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .legend-name { font-weight: 600; color: var(--text); flex: 1; }
+  .legend-pct  { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .legend-val  { font-weight: 700; color: var(--navy); min-width: 20px; text-align: right; }
+
+  /* ── Pendampingan & Bis card ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .info-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+
+  /* progress pill */
+  .progress-section { margin-top: 12px; }
+  .progress-item { margin-bottom: 14px; }
+  .progress-header {
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 5px;
+  }
+  .progress-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .progress-count { font-size: 13px; font-weight: 700; color: var(--navy); }
+  .progress-track {
+    height: 10px; background: var(--bg);
+    border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 99px;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    width: 0;
+  }
+
+  /* Alert box */
+  .alert-box {
+    border-radius: 10px; padding: 14px 16px;
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-top: 16px;
+  }
+  .alert-box.warn  { background: #FFF3E0; border: 1px solid #FFB74D; }
+  .alert-box.good  { background: #E8F5E9; border: 1px solid #81C784; }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .alert-text { font-size: 12.5px; color: var(--text); line-height: 1.5; }
+  .alert-text strong { color: var(--navy); }
+
+  /* ── Tabel peserta ── */
+  .table-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    animation: fadeUp 0.5s 0.3s ease both;
+    overflow: hidden;
+  }
+  .table-header {
+    display: flex; align-items: center;
+    justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .search-box {
+    padding: 8px 14px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--text); background: var(--bg); outline: none;
+    transition: border-color 0.2s; width: 200px;
+  }
+  .search-box:focus { border-color: var(--teal); }
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    background: var(--navy);
+    color: rgba(255,255,255,0.85);
+    padding: 10px 12px;
+    text-align: left; font-weight: 600;
+    font-size: 11.5px; letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  thead th:first-child { border-radius: 8px 0 0 0; }
+  thead th:last-child  { border-radius: 0 8px 0 0; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--teal3); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 10px 12px; color: var(--text); vertical-align: middle; }
+
+  .gen-badge {
+    display: inline-block;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+  }
+  .gen-Anak    { background: rgba(78,205,196,0.15); color: #2A9D6F; }
+  .gen-Remaja  { background: rgba(69,183,209,0.15); color: #1A7A9A; }
+  .gen-Pemuda  { background: rgba(42,139,139,0.15); color: var(--teal2); }
+  .gen-Dewasa  { background: rgba(26,58,92,0.10);   color: var(--navy); }
+  .gen-Adi     { background: rgba(200,146,43,0.15); color: var(--gold); }
+
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+  }
+  .status-lunas  { background: #E8F5E9; color: var(--success); }
+  .status-belum  { background: #FFF3E0; color: var(--warn); }
+
+  .pendampingan-yes { color: var(--warn); font-weight: 700; font-size: 12px; }
+  .pendampingan-no  { color: var(--muted); font-size: 12px; }
+
+  .no-data {
+    text-align: center; padding: 48px 20px;
+    color: var(--muted); font-size: 14px;
+  }
+  .no-data-icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* ── Loading spinner ── */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(240,246,250,0.85);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 200; display: none;
+  }
+  .loading-spinner {
+    width: 44px; height: 44px;
+    border: 4px solid var(--border);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 14px;
+  }
+  .loading-text { font-size: 14px; color: var(--muted); font-weight: 600; }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .stats-grid  { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .info-grid   { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 540px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .main { padding: 16px 12px 60px; }
+    .topbar { padding: 0 14px; }
+    .topbar-title { font-size: 14px; }
+    .last-updated { display: none; }
+    .stat-num { font-size: 30px; }
+    .search-box { width: 100%; }
+    .table-header { flex-direction: column; align-items: stretch; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Memuat data...</div>
+</div>
+
+
+
+<!-- ── DASHBOARD ── -->
+<div class="dashboard" id="dashboard" style="display:block">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">✋</div>
+      <div class="topbar-title">Retreat <span>Jemari</span> 2026</div>
+    </div>
+    <div class="topbar-right">
+      <div class="last-updated" id="lastUpdated">—</div>
+      <button class="btn-refresh" onclick="loadData()">↻ Refresh</button>
+
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card primary" style="animation-delay:0s">
+        <div class="stat-label">Total Peserta</div>
+        <div class="stat-num" id="statTotal">—</div>
+        <div class="stat-sub" id="statTotalSub">Terdaftar</div>
+        <div class="stat-icon">👥</div>
+      </div>
+      <div class="stat-card male" style="animation-delay:0.05s">
+        <div class="stat-label">Laki-laki</div>
+        <div class="stat-num" id="statLaki">—</div>
+        <div class="stat-sub" id="statLakiPct">—</div>
+        <div class="stat-icon">♂</div>
+      </div>
+      <div class="stat-card female" style="animation-delay:0.1s">
+        <div class="stat-label">Perempuan</div>
+        <div class="stat-num" id="statPerempuan">—</div>
+        <div class="stat-sub" id="statPerempuanPct">—</div>
+        <div class="stat-icon">♀</div>
+      </div>
+      <div class="stat-card pending" style="animation-delay:0.15s">
+        <div class="stat-label">Belum Lunas</div>
+        <div class="stat-num" id="statBelumLunas">—</div>
+        <div class="stat-sub" id="statLunas">— sudah lunas</div>
+        <div class="stat-icon">💳</div>
+      </div>
+    </div>
+
+    <!-- Estimasi pemasukan banner -->
+    <div class="income-banner" id="incomeBanner">
+      <div class="income-main">
+        <div class="income-icon">💰</div>
+        <div>
+          <div class="income-label">Estimasi Total Pemasukan</div>
+          <div class="income-amount" id="incomeTotal">—</div>
+        </div>
+      </div>
+      <div class="income-breakdown" id="incomeBreakdown"></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+
+      <!-- Generasi chart -->
+      <div class="chart-card">
+        <div class="chart-title">
+          <div class="chart-title-icon" style="background:#E0F4F4">🌱</div>
+          Sebaran Generasi
+        </div>
+        <div class="bar-chart" id="generasiChart"></div>
+      </div>
+
+      <!-- Wilayah donut -->
+      <div class="chart-card">
+        <div class="chart-title">
+          <div class="chart-title-icon" style="background:#EEF4FF">📍</div>
+          Sebaran Wilayah
+        </div>
+        <div class="donut-wrap">
+          <div class="donut-svg-wrap">
+            <svg id="donutSvg" viewBox="0 0 120 120" width="120" height="120"></svg>
+            <div class="donut-center-text">
+              <div class="donut-center-num" id="donutTotal">—</div>
+              <div class="donut-center-label">Peserta</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="wilayahLegend"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Info cards -->
+    <div class="info-grid">
+
+      <!-- Pendampingan -->
+      <div class="info-card">
+        <div class="chart-title">
+          <div class="chart-title-icon" style="background:#FFF3E0">🤝</div>
+          Kebutuhan Pendampingan
+        </div>
+        <div class="progress-section" id="pendampinganSection"></div>
+      </div>
+
+      <!-- Pembayaran -->
+      <div class="info-card">
+        <div class="chart-title">
+          <div class="chart-title-icon" style="background:#E8F5E9">💳</div>
+          Status Pembayaran
+        </div>
+        <div class="progress-section" id="pembayaranSection"></div>
+      </div>
+
+    </div>
+
+    <!-- Tabel peserta -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="chart-title" style="margin-bottom:0">
+          <div class="chart-title-icon" style="background:#F0F6FA">📋</div>
+          Daftar Peserta
+          <span id="tableCount" style="font-size:12px;color:var(--muted);font-weight:500"></span>
+        </div>
+        <input type="text" class="search-box" id="searchBox"
+               placeholder="🔍 Cari nama / wilayah..."
+               oninput="filterTable()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama Lengkap</th>
+              <th>Wilayah</th>
+              <th>Kelamin</th>
+              <th>Usia</th>
+              <th>Generasi</th>
+              <th>Pendampingan</th>
+              <th>Status Bayar</th>
+              <th>Waktu Daftar</th>
+            </tr>
+          </thead>
+          <tbody id="pesertaTable"></tbody>
+        </table>
+        <div id="noData" class="no-data" style="display:none">
+          <div class="no-data-icon">🔍</div>
+          Tidak ada peserta yang cocok dengan pencarian.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUcOkQo9mi02qZpQz2Llw7REZuy9PUFbtpjG64zC5xfQ6HwFFbbUkDNKrOcJLbEbxi/exec";
+
+  // Tarif per kategori
+  const TARIF = {
+    'Anak':             25000,
+    'Remaja':           25000,
+    'Pemuda':           50000,
+    'Dewasa / Keluarga':50000,
+    'Adi Yuswa':        50000,
+    'Tamu Luar':       150000,
+  };
+
+  // ── State ──
+  let allPeserta = [];
+
+  // ── Load data ──
+  async function loadData() {
+    showLoading(true);
+    try {
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'getDashboard', password: 'bypass_no_auth' }),
+      });
+      const result = await resp.json();
+      showLoading(false);
+
+      if (!result.success && result.error === 'Password salah.') {
+        // Apps Script masih pakai password — update Code.gs agar getDashboard tidak cek password
+        alert('Catatan: Update Code.gs agar tidak memerlukan password. Lihat panduan.');
+        return;
+      }
+
+      allPeserta = result.data.peserta || [];
+      const summary = result.data.summary;
+
+      renderStats(summary);
+      renderIncome(allPeserta, summary);
+      renderGenerasiChart(summary.byGenerasi);
+      renderDonut(summary.byWilayah, summary.total);
+      renderPendampingan(summary);
+      renderPembayaran(summary);
+      renderTable(allPeserta);
+
+      document.getElementById('lastUpdated').textContent =
+        'Update: ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+    } catch (err) {
+      showLoading(false);
+      alert('Gagal terhubung ke server. Periksa koneksi internet Anda.');
+    }
+  }
+
+  // ── Estimasi pemasukan ──
+  function renderIncome(peserta, summary) {
+    const fmt = n => 'Rp ' + n.toLocaleString('id-ID');
+
+    // Hitung per kategori
+    const byKat = {
+      'Anak & Remaja': { tarif: 25000,  count: 0 },
+      'Dewasa/Pemuda/Adi Yuswa': { tarif: 50000,  count: 0 },
+      'Tamu Luar':     { tarif: 150000, count: 0 },
+    };
+
+    peserta.forEach(p => {
+      const gen = p['Generasi'] || '';
+      const wil = p['Wilayah']  || '';
+      if (wil === 'Tamu Luar') {
+        byKat['Tamu Luar'].count++;
+      } else if (gen === 'Anak' || gen === 'Remaja') {
+        byKat['Anak & Remaja'].count++;
+      } else {
+        byKat['Dewasa/Pemuda/Adi Yuswa'].count++;
+      }
+    });
+
+    let total = 0;
+    Object.values(byKat).forEach(k => { total += k.tarif * k.count; });
+
+    document.getElementById('incomeTotal').textContent = fmt(total);
+
+    document.getElementById('incomeBreakdown').innerHTML = Object.entries(byKat).map(([label, k]) => `
+      <div class="income-pill">
+        <div class="income-pill-label">${label}</div>
+        <div class="income-pill-val">${fmt(k.tarif)}</div>
+        <div class="income-pill-count">${k.count} orang = ${fmt(k.tarif * k.count)}</div>
+      </div>`).join('');
+  }
+
+  // ── Stats ──
+  function renderStats(s) {
+    const total = s.total || 0;
+    document.getElementById('statTotal').textContent = total;
+    const pctTarget = Math.min(Math.round((total / 100) * 100), 100);
+    document.getElementById('statTotalSub').textContent = total > 0
+      ? `${pctTarget}% dari target 100 peserta`
+      : 'Belum ada pendaftar';
+
+    document.getElementById('statLaki').textContent = s.lakiLaki || 0;
+    document.getElementById('statLakiPct').textContent =
+      total > 0 ? `${Math.round((s.lakiLaki/total)*100)}% dari total` : '—';
+
+    document.getElementById('statPerempuan').textContent = s.perempuan || 0;
+    document.getElementById('statPerempuanPct').textContent =
+      total > 0 ? `${Math.round((s.perempuan/total)*100)}% dari total` : '—';
+
+    document.getElementById('statBelumLunas').textContent = s.belumLunas || 0;
+    document.getElementById('statLunas').textContent = `${s.lunas || 0} sudah lunas`;
+  }
+
+  // ── Generasi bar chart ──
+  function renderGenerasiChart(byGenerasi) {
+    const data = [
+      { label: 'Anak',             key: 'Anak',              color: 'var(--c-anak)' },
+      { label: 'Remaja',           key: 'Remaja',            color: 'var(--c-remaja)' },
+      { label: 'Pemuda',           key: 'Pemuda',            color: 'var(--c-pemuda)' },
+      { label: 'Dewasa/Keluarga',  key: 'Dewasa / Keluarga', color: 'var(--c-dewasa)' },
+      { label: 'Adi Yuswa',        key: 'Adi Yuswa',         color: 'var(--c-adi)' },
+    ];
+
+    const max = Math.max(...data.map(d => byGenerasi[d.key] || 0), 1);
+    const el  = document.getElementById('generasiChart');
+    el.innerHTML = data.map(d => {
+      const val = byGenerasi[d.key] || 0;
+      const pct = Math.round((val / max) * 100);
+      return `
+        <div class="bar-row">
+          <div class="bar-label">${d.label}</div>
+          <div class="bar-track">
+            <div class="bar-fill" style="background:${d.color};width:0"
+                 data-width="${pct}%">
+              ${val > 0 ? `<span class="bar-val">${val}</span>` : ''}
+            </div>
+          </div>
+          <div class="bar-num">${val}</div>
+        </div>`;
+    }).join('');
+
+    // Animate bars
+    setTimeout(() => {
+      el.querySelectorAll('.bar-fill').forEach(b => {
+        b.style.width = b.dataset.width;
+      });
+    }, 100);
+  }
+
+  // ── Wilayah donut ──
+  function renderDonut(byWilayah, total) {
+    const colors = ['#2A8B8B','#45B7D1','#C8922B','#4ECDC4','#E07B30','#2980B9','#8E44AD'];
+    const entries = Object.entries(byWilayah).filter(([,v]) => v > 0);
+    const cx = 60, cy = 60, r = 48, stroke = 14;
+    const circ = 2 * Math.PI * r;
+
+    document.getElementById('donutTotal').textContent = total;
+
+    if (total === 0) {
+      document.getElementById('donutSvg').innerHTML =
+        `<circle cx="60" cy="60" r="48" fill="none" stroke="#E0EEF8" stroke-width="14"/>`;
+      document.getElementById('wilayahLegend').innerHTML =
+        `<div style="font-size:12px;color:var(--muted)">Belum ada data</div>`;
+      return;
+    }
+
+    let offset = 0;
+    let svgPaths = `<circle cx="60" cy="60" r="48" fill="none" stroke="#E8F4F4" stroke-width="14"/>`;
+    let legendHtml = '';
+
+    entries.forEach(([wil, val], i) => {
+      const pct   = val / total;
+      const dash  = pct * circ;
+      const color = colors[i % colors.length];
+      svgPaths += `<circle cx="${cx}" cy="${cy}" r="${r}"
+        fill="none" stroke="${color}" stroke-width="${stroke}"
+        stroke-dasharray="${dash} ${circ - dash}"
+        stroke-dashoffset="${circ * 0.25 - offset}"
+        stroke-linecap="butt" style="transition:all 1s ease"/>`;
+      offset += dash;
+
+      legendHtml += `
+        <div class="legend-item">
+          <div class="legend-dot" style="background:${color}"></div>
+          <span class="legend-name">${wil}</span>
+          <span class="legend-pct">${Math.round(pct*100)}%</span>
+          <span class="legend-val">${val}</span>
+        </div>`;
+    });
+
+    document.getElementById('donutSvg').innerHTML = svgPaths;
+    document.getElementById('wilayahLegend').innerHTML = legendHtml;
+  }
+
+  // ── Pendampingan ──
+  function renderPendampingan(s) {
+    const total = s.total || 0;
+    const ya    = s.pendampingan || 0;
+    const tidak = total - ya;
+    const pctYa = total > 0 ? Math.round((ya / total) * 100) : 0;
+
+    document.getElementById('pendampinganSection').innerHTML = `
+      <div class="progress-item">
+        <div class="progress-header">
+          <div class="progress-name">⚠️ Perlu Pendampingan</div>
+          <div class="progress-count">${ya} orang</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="background:var(--warn)" data-w="${pctYa}%"></div>
+        </div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-header">
+          <div class="progress-name">✅ Mandiri</div>
+          <div class="progress-count">${tidak} orang</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="background:var(--success)"
+               data-w="${100 - pctYa}%"></div>
+        </div>
+      </div>
+      ${ya > 0
+        ? `<div class="alert-box warn">
+             <div class="alert-icon">⚠️</div>
+             <div class="alert-text">Ada <strong>${ya} peserta</strong> yang membutuhkan pendampingan. Pastikan panitia menyiapkan pendamping yang cukup.</div>
+           </div>`
+        : `<div class="alert-box good">
+             <div class="alert-icon">✅</div>
+             <div class="alert-text">Semua peserta mandiri. Tidak ada kebutuhan pendampingan khusus.</div>
+           </div>`
+      }`;
+    animateProgress('pendampinganSection');
+  }
+
+  // ── Pembayaran ──
+  function renderPembayaran(s) {
+    const total   = s.total || 0;
+    const lunas   = s.lunas || 0;
+    const belum   = s.belumLunas || 0;
+    const pctLunas = total > 0 ? Math.round((lunas / total) * 100) : 0;
+
+    document.getElementById('pembayaranSection').innerHTML = `
+      <div class="progress-item">
+        <div class="progress-header">
+          <div class="progress-name">✅ Sudah Lunas</div>
+          <div class="progress-count">${lunas} orang</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="background:var(--success)" data-w="${pctLunas}%"></div>
+        </div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-header">
+          <div class="progress-name">⏳ Belum Lunas</div>
+          <div class="progress-count">${belum} orang</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="background:var(--warn)" data-w="${100 - pctLunas}%"></div>
+        </div>
+      </div>
+      ${belum > 0
+        ? `<div class="alert-box warn">
+             <div class="alert-icon">💳</div>
+             <div class="alert-text"><strong>${belum} peserta</strong> belum melunasi pembayaran. Status bisa diubah langsung di Google Sheets.</div>
+           </div>`
+        : `<div class="alert-box good">
+             <div class="alert-icon">🎉</div>
+             <div class="alert-text">Semua peserta sudah lunas. Mantap!</div>
+           </div>`
+      }`;
+    animateProgress('pembayaranSection');
+  }
+
+  function animateProgress(containerId) {
+    setTimeout(() => {
+      document.querySelectorAll(`#${containerId} .progress-fill`).forEach(el => {
+        el.style.width = el.dataset.w;
+      });
+    }, 150);
+  }
+
+  // ── Render table ──
+  function renderTable(data) {
+    const tbody = document.getElementById('pesertaTable');
+    const noData = document.getElementById('noData');
+    document.getElementById('tableCount').textContent =
+      data.length > 0 ? `— ${data.length} peserta` : '';
+
+    if (data.length === 0) {
+      tbody.innerHTML = '';
+      noData.style.display = 'block';
+      return;
+    }
+    noData.style.display = 'none';
+
+    tbody.innerHTML = data.map((p, i) => {
+      const gen = (p['Generasi'] || '').replace(' / Keluarga', '');
+      const genKey = gen.split(' ')[0];
+      const statusClass = (p['Status Bayar'] === 'Lunas') ? 'status-lunas' : 'status-belum';
+      const statusIcon  = (p['Status Bayar'] === 'Lunas') ? '✓' : '⏳';
+      const pendYa = p['Perlu Pendampingan'] === 'Ya';
+
+      return `<tr>
+        <td style="color:var(--muted);font-size:12px">${p['No'] || i+1}</td>
+        <td style="font-weight:600">${p['Nama Lengkap'] || '—'}</td>
+        <td>${p['Wilayah'] || '—'}</td>
+        <td>${p['Jenis Kelamin'] === 'Laki-laki' ? '♂' : '♀'} ${p['Jenis Kelamin'] || '—'}</td>
+        <td>${p['Usia'] || '—'}</td>
+        <td><span class="gen-badge gen-${genKey}">${p['Generasi'] || '—'}</span></td>
+        <td class="${pendYa ? 'pendampingan-yes' : 'pendampingan-no'}">${pendYa ? '⚠️ Ya' : 'Tidak'}</td>
+        <td><span class="status-badge ${statusClass}">${statusIcon} ${p['Status Bayar'] || '—'}</span></td>
+        <td style="color:var(--muted);font-size:12px;white-space:nowrap">${p['Timestamp'] || '—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Filter table ──
+  function filterTable() {
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    const filtered = allPeserta.filter(p =>
+      (p['Nama Lengkap'] || '').toLowerCase().includes(q) ||
+      (p['Wilayah'] || '').toLowerCase().includes(q) ||
+      (p['Generasi'] || '').toLowerCase().includes(q)
+    );
+    renderTable(filtered);
+  }
+
+  // ── Loading ──
+  function showLoading(show) {
+    document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+  }
+
+  // ── Auto load on open ──
+  loadData();
+</script>
+</body>
+</html>
