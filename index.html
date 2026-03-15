@@ -398,6 +398,30 @@
   }
   .no-data-icon { font-size: 40px; margin-bottom: 12px; }
 
+  /* ── Pagination ── */
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 4px 0; flex-wrap: wrap; gap: 10px;
+  }
+  .pagination-info {
+    font-size: 12.5px; color: var(--muted); font-weight: 500;
+  }
+  .pagination-info strong { color: var(--navy); }
+  .pagination-btns {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .pg-btn {
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    background: var(--white); color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pg-btn:hover:not(:disabled) { border-color: var(--teal); color: var(--teal); background: var(--teal3); }
+  .pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .pg-btn.active { background: var(--navy); border-color: var(--navy); color: white; }
+  
   /* ── Loading spinner ── */
   .loading-overlay {
     position: fixed; inset: 0;
@@ -601,6 +625,10 @@
           <tbody id="pesertaTable"></tbody>
         </table>
         <div id="noData" class="no-data" style="display:none">
+          <div class="pagination" id="pagination" style="display:none">
+            <div class="pagination-info" id="pageInfo"></div>
+            <div class="pagination-btns" id="pageBtns"></div>
+          </div>
           <div class="no-data-icon">🔍</div>
           Tidak ada peserta yang cocok dengan pencarian.
         </div>
@@ -889,29 +917,50 @@
     }, 150);
   }
 
-  // ── Render table ──
+    // ── Paging state ──
+  const PAGE_SIZE = 10;
+  let currentPage = 1;
+  let filteredData = [];
+  
+  // ── Render table dengan paging ──
   function renderTable(data) {
-    const tbody = document.getElementById('pesertaTable');
-    const noData = document.getElementById('noData');
+    filteredData = data;
+    currentPage  = 1;
+    renderPage();
+  }
+  
+  function renderPage() {
+    const tbody      = document.getElementById('pesertaTable');
+    const noData     = document.getElementById('noData');
+    const pagination = document.getElementById('pagination');
+    const total      = filteredData.length;
+  
     document.getElementById('tableCount').textContent =
-      data.length > 0 ? `— ${data.length} peserta` : '';
-
-    if (data.length === 0) {
+      total > 0 ? `— ${total} peserta` : '';
+  
+    if (total === 0) {
       tbody.innerHTML = '';
       noData.style.display = 'block';
+      pagination.style.display = 'none';
       return;
     }
     noData.style.display = 'none';
-
-    tbody.innerHTML = data.map((p, i) => {
+  
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    const start      = (currentPage - 1) * PAGE_SIZE;
+    const end        = Math.min(start + PAGE_SIZE, total);
+    const pageData   = filteredData.slice(start, end);
+  
+    tbody.innerHTML = pageData.map((p, i) => {
       const gen = (p['Generasi'] || '').replace(' / Keluarga', '');
-      const genKey = gen.split(' ')[0];
+      const genKey      = gen.split(' ')[0];
       const statusClass = (p['Status Bayar'] === 'Lunas') ? 'status-lunas' : 'status-belum';
       const statusIcon  = (p['Status Bayar'] === 'Lunas') ? '✓' : '⏳';
-      const pendYa = p['Perlu Pendampingan'] === 'Ya';
-
+      const pendYa      = p['Perlu Pendampingan'] === 'Ya';
+      const rowNum      = start + i + 1;
+  
       return `<tr>
-        <td style="color:var(--muted);font-size:12px">${p['No'] || i+1}</td>
+        <td style="color:var(--muted);font-size:12px">${rowNum}</td>
         <td style="font-weight:600">${p['Nama Lengkap'] || '—'}</td>
         <td>${p['Wilayah'] || '—'}</td>
         <td>${p['Jenis Kelamin'] === 'Laki-laki' ? '♂' : '♀'} ${p['Jenis Kelamin'] || '—'}</td>
@@ -922,8 +971,36 @@
         <td style="color:var(--muted);font-size:12px;white-space:nowrap">${p['Timestamp'] || '—'}</td>
       </tr>`;
     }).join('');
+  
+    if (totalPages <= 1) {
+      pagination.style.display = 'none';
+      return;
+    }
+    pagination.style.display = 'flex';
+    document.getElementById('pageInfo').innerHTML =
+      `Menampilkan <strong>${start+1}–${end}</strong> dari <strong>${total}</strong> peserta`;
+  
+    let btns = `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+    for (let p = 1; p <= totalPages; p++) {
+      if (totalPages > 7 && p > 2 && p < totalPages-1 && Math.abs(p - currentPage) > 1) {
+        if (p === 3 || p === totalPages-2) btns += `<span style="padding:0 4px;color:var(--muted)">…</span>`;
+        continue;
+      }
+      btns += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    }
+    btns += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+    document.getElementById('pageBtns').innerHTML = btns;
   }
-
+  
+  function goPage(p) {
+    const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+    if (p < 1 || p > totalPages) return;
+    currentPage = p;
+    renderPage();
+    document.getElementById('pesertaTable').closest('.table-card')
+      .scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  
   // ── Filter table ──
   function filterTable() {
     const q = document.getElementById('searchBox').value.toLowerCase();
