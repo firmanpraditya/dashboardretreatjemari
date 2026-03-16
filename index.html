@@ -195,7 +195,15 @@
     display: flex; align-items: center; gap: 16px;
   }
   .income-icon {
-    font-size: 36px; line-height: 1;
+    font-size: 28px; line-height: 1;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    color: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    padding: 6px 10px;
+    letter-spacing: -1px;
   }
   .income-label {
     font-size: 12px; font-weight: 600; text-transform: uppercase;
@@ -531,7 +539,7 @@
     <!-- Estimasi pemasukan banner -->
     <div class="income-banner" id="incomeBanner">
       <div class="income-main">
-        <div class="income-icon">💰</div>
+        <div class="income-icon">Rp</div>
         <div>
           <div class="income-label">Estimasi Total Pemasukan</div>
           <div class="income-amount" id="incomeTotal">—</div>
