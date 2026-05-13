@@ -396,6 +396,9 @@
   }
   .status-lunas  { background: #E8F5E9; color: var(--success); }
   .status-belum  { background: #FFF3E0; color: var(--warn); }
+  .status-batal  { background: #FFEBEE; color: var(--error); }
+  tr.row-batal td { color: var(--muted); background: #FFF7F7; }
+  tr.row-batal td:nth-child(2) { text-decoration: line-through; text-decoration-thickness: 1px; }
 
   .pendampingan-yes { color: var(--warn); font-weight: 700; font-size: 12px; }
   .pendampingan-no  { color: var(--muted); font-size: 12px; }
@@ -629,6 +632,7 @@
               <th>Generasi</th>
               <th>Pendampingan</th>
               <th>Status Bayar</th>
+              <th>Batal</th>
               <th>Waktu Daftar</th>
             </tr>
           </thead>
@@ -650,7 +654,7 @@
 
 <script>
   // ── CONFIG ──────────────────────────────────────────────
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUcOkQo9mi02qZpQz2Llw7REZuy9PUFbtpjG64zC5xfQ6HwFFbbUkDNKrOcJLbEbxi/exec";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyh239KShgVn1rBExxhHeLk4bkyLQqMU9Sax-edi1TJMKTVKAQIN4Ss8gfDbJtur40W/exec";
 
   // Tarif per kategori
   const TARIF = {
@@ -664,6 +668,10 @@
 
   // ── State ──
   let allPeserta = [];
+
+  function isPesertaBatal(p) {
+    return String(p['Batal'] || '').trim().toLowerCase() === 'ya';
+  }
 
   // ── Load data ──
   async function loadData() {
@@ -714,6 +722,8 @@
     };
 
     peserta.forEach(p => {
+      if (isPesertaBatal(p)) return;
+
       const gen = p['Generasi'] || '';
       const wil = p['Wilayah']  || '';
       if (wil === 'Tamu Luar') {
@@ -743,9 +753,10 @@
     const total = s.total || 0;
     document.getElementById('statTotal').textContent = total;
     const pctTarget = Math.min(Math.round((total / 100) * 100), 100);
+    const totalBatal = s.totalBatal || 0;
     document.getElementById('statTotalSub').textContent = total > 0
-      ? `${pctTarget}% dari target 100 peserta`
-      : 'Belum ada pendaftar';
+      ? `${pctTarget}% dari target 100 peserta${totalBatal > 0 ? ` • ${totalBatal} batal` : ''}`
+      : (totalBatal > 0 ? `${totalBatal} peserta batal` : 'Belum ada pendaftar');
 
     document.getElementById('statLaki').textContent = s.lakiLaki || 0;
     document.getElementById('statLakiPct').textContent =
@@ -945,8 +956,10 @@
     const pagination = document.getElementById('pagination');
     const total      = filteredData.length;
   
+    const totalAktifTabel = filteredData.filter(p => !isPesertaBatal(p)).length;
+    const totalBatalTabel = total - totalAktifTabel;
     document.getElementById('tableCount').textContent =
-      total > 0 ? `— ${total} peserta` : '';
+      total > 0 ? `— ${totalAktifTabel} aktif${totalBatalTabel > 0 ? `, ${totalBatalTabel} batal` : ''}` : '';
   
     if (total === 0) {
       tbody.innerHTML = '';
@@ -967,9 +980,13 @@
       const statusClass = (p['Status Bayar'] === 'Lunas') ? 'status-lunas' : 'status-belum';
       const statusIcon  = (p['Status Bayar'] === 'Lunas') ? '✓' : '⏳';
       const pendYa      = p['Perlu Pendampingan'] === 'Ya';
+      const isBatal    = isPesertaBatal(p);
+      const batalBadge = isBatal
+        ? '<span class="status-badge status-batal">✕ Ya</span>'
+        : '<span style="color:var(--muted);font-size:12px">—</span>';
       const rowNum      = start + i + 1;
   
-      return `<tr>
+      return `<tr class="${isBatal ? 'row-batal' : ''}">
         <td style="color:var(--muted);font-size:12px">${rowNum}</td>
         <td style="font-weight:600">${p['Nama Lengkap'] || '—'}</td>
         <td>${p['Wilayah'] || '—'}</td>
@@ -978,6 +995,7 @@
         <td><span class="gen-badge gen-${genKey}">${p['Generasi'] || '—'}</span></td>
         <td class="${pendYa ? 'pendampingan-yes' : 'pendampingan-no'}">${pendYa ? '⚠️ Ya' : 'Tidak'}</td>
         <td><span class="status-badge ${statusClass}">${statusIcon} ${p['Status Bayar'] || '—'}</span></td>
+        <td>${batalBadge}</td>
         <td style="color:var(--muted);font-size:12px;white-space:nowrap">${p['Timestamp'] || '—'}</td>
       </tr>`;
     }).join('');
@@ -1017,7 +1035,8 @@
     const filtered = allPeserta.filter(p =>
       (p['Nama Lengkap'] || '').toLowerCase().includes(q) ||
       (p['Wilayah'] || '').toLowerCase().includes(q) ||
-      (p['Generasi'] || '').toLowerCase().includes(q)
+      (p['Generasi'] || '').toLowerCase().includes(q) ||
+      (p['Batal'] || '').toLowerCase().includes(q)
     );
     renderTable(filtered);
   }
