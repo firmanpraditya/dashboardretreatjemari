@@ -106,7 +106,7 @@
   /* ── Stat cards ── */
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 14px;
     margin-bottom: 20px;
   }
@@ -141,6 +141,14 @@
   .stat-card.male .stat-num     { color: #2980B9; }
   .stat-card.female .stat-num   { color: #C2185B; }
   .stat-card.pending .stat-num  { color: var(--warn); }
+
+  .stat-card.cancel::before {
+    background: linear-gradient(90deg, var(--error), #A83228);
+  }
+
+  .stat-card.cancel .stat-num {
+    color: var(--error);
+  }
 
   .stat-sub {
     font-size: 12px; color: var(--muted); font-weight: 500;
@@ -539,6 +547,12 @@
         <div class="stat-sub" id="statLunas">— sudah lunas</div>
         <div class="stat-icon">💳</div>
       </div>
+      <div class="stat-card cancel" style="animation-delay:0.2s">
+        <div class="stat-label">Batal</div>
+        <div class="stat-num" id="statBatal">—</div>
+        <div class="stat-sub" id="statBatalSub">Tidak dihitung peserta aktif</div>
+        <div class="stat-icon">✕</div>
+      </div>
     </div>
 
     <!-- Estimasi pemasukan banner -->
@@ -768,6 +782,10 @@
 
     document.getElementById('statBelumLunas').textContent = s.belumLunas || 0;
     document.getElementById('statLunas').textContent = `${s.lunas || 0} sudah lunas`;
+
+    document.getElementById('statBatal').textContent = s.totalBatal || 0;
+    document.getElementById('statBatalSub').textContent =
+    (s.totalBatal || 0) > 0 ? 'Tidak dihitung ke total': 'Tidak ada pembatalan';
   }
 
   // ── Generasi bar chart ──
